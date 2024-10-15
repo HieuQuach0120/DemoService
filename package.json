@@ -1,0 +1,19 @@
+{
+  "name": "financialmanagementservice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuachDucHieu/FinancialManagementService.git"
+  },
+  "author": "hieuQd",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/QuachDucHieu/FinancialManagementService/issues"
+  },
+  "homepage": "https://github.com/QuachDucHieu/FinancialManagementService#readme"
+}

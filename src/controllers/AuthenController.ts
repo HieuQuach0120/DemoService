@@ -34,7 +34,7 @@ router.post("/login", express.json(), async (req, res) => {
           name: member.userName,
         };
         const token = await jwt.sign(payload, String(process.env.SECRETKEY), {
-          expiresIn: body.memorize === true ? "30d" : "1h",
+          expiresIn: "24h",
         });
         return res.status(200).json(new ResponseData(token, "Login Success"));
       } else {

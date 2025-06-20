@@ -5,6 +5,8 @@ import helmet from "helmet";
 import authenMiddleware from "./src/middleware/Authentication";
 import router from "./src/routes/index";
 import { AppDataSource } from "./dbConfig";
+import 'reflect-metadata';
+// other imports
 
 dotenv.config();
 const app = express();

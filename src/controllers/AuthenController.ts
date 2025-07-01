@@ -22,11 +22,12 @@ router.post("/login", express.json(), async (req, res) => {
       const today = new Date();
       const threeMonthsAgo = new Date(today);
       threeMonthsAgo.setMonth(today.getMonth() - 3);
-      const member = await userRepository.findOne({
-        where: {
-          userName: body.userName,
-        },
-      });
+      let member;
+      if (body.userName) {
+        member = await userRepository.findOne({ where: { userName: body.userName } });
+      } else if (body.email) {
+        member = await userRepository.findOne({ where: { email: body.email } });
+      }
       if (member && bcrypt.compareSync(body.passWord, member.passWord || "")) {
         const payload = {
           email: member.email,
@@ -67,6 +68,39 @@ router.post("/forgot-password", express.json(), async (req, res) => {
   member.passWord = bcrypt.hashSync("123456aA@", 10);
   await userRepository.save(member);
   return res.status(200).json(new ResponseData("", "Done"));
+});
+
+// Đăng ký tài khoản
+router.post("/register", express.json(), async (req, res) => {
+  try {
+    const { userName, passWord, email, phoneNumber } = req.body;
+    if (!userName || !passWord || !email || !phoneNumber) {
+      return res.status(400).json(new ResponseData("", "Missing required fields"));
+    }
+    // Kiểm tra trùng userName hoặc email
+    const existingUser = await userRepository.findOne({
+      where: [
+        { userName: userName },
+        { email: email }
+      ]
+    });
+    if (existingUser) {
+      return res.status(409).json(new ResponseData("", "Username or email already exists"));
+    }
+    // Hash password
+    const hashedPassword = bcrypt.hashSync(passWord, 10);
+    // Tạo user mới
+    const newUser = userRepository.create({
+      userName,
+      passWord: hashedPassword,
+      email,
+      phoneNumber
+    });
+    await userRepository.save(newUser);
+    return res.status(201).json(new ResponseData("", "Register Success"));
+  } catch (error: any) {
+    return res.status(500).json(new ResponseData("", error.toString()));
+  }
 });
 
 // cron.schedule("*/10 * * * * *", () => {

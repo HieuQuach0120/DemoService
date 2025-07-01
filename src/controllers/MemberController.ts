@@ -4,6 +4,7 @@ import ResponseData from "../models/ResponeData";
 import { AppDataSource } from "../../dbConfig";
 import { Member } from "../models/Member";
 import validateSaveMember from "../validate/MemberValidate";
+import { MemberService } from "../services/MemberService";
 
 dotenv.config();
 const router = express.Router();
@@ -16,18 +17,13 @@ const memberRepository = AppDataSource.getRepository(Member);
 router.post("/create", express.json(), async (req, res) => {
   try {
     validateSaveMember(req.body).then(async (member) => {
-      const memberResult = await memberRepository.findOneBy({
-        name: member.name,
-      });
-      if (memberResult) {
-        return res.status(400).json(new ResponseData("", "name_is_exist"));
+      const result = await MemberService.createMember(member);
+      if (result.error) {
+        return res.status(400).json(new ResponseData("", result.error));
       }
-      const form = Object.assign({}, member);
-      const memberSave = memberRepository.create(form);
-      await memberRepository.save(memberSave);
       return res
         .status(200)
-        .json(new ResponseData(member, "member_created_success"));
+        .json(new ResponseData(result.member, "member_created_success"));
     });
   } catch (error: any) {
     return res.status(500).json(new ResponseData("", error.toString()));
@@ -38,25 +34,44 @@ router.post("/create", express.json(), async (req, res) => {
 router.get("/get-list", async (req, res) => {
   try {
     const data = req.query;
-    let query = memberRepository.createQueryBuilder("member");
-
-    // Bỏ điều kiện WHERE "1 = 1" vì nó không cần thiết
-    if (data.name) {
-      const keyword = data.name.toString();
-      query = query.where("name LIKE :name", { name: `%${keyword}%` });
-    }
-
-    // Always set limit with offset
-    const limit = data.limit ? Number(data.limit) : LIMIT_DEFAULT;
-    const offset = data.offset ? Number(data.offset) : OFFSET_DEFAULT;
-    query.limit(limit);
-    query.offset(offset);
-
-    const [members, total] = await query.getManyAndCount();
-
-    return res.status(200).json(new ResponseData({ members, total }, "Done"));
+    const result = await MemberService.getMemberList(data, LIMIT_DEFAULT, OFFSET_DEFAULT);
+    return res.status(200).json(new ResponseData(result, "Done"));
   } catch (error: any) {
     console.error("Error:", error);
+    return res.status(500).json(new ResponseData("", error.toString()));
+  }
+});
+
+// Tìm member theo id
+router.get("/find/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json(new ResponseData("", "Missing member id"));
+    }
+    const member = await MemberService.findMemberById(Number(id));
+    if (!member) {
+      return res.status(404).json(new ResponseData("", "Member not found"));
+    }
+    return res.status(200).json(new ResponseData(member, "Done"));
+  } catch (error: any) {
+    return res.status(500).json(new ResponseData("", error.toString()));
+  }
+});
+
+// Xóa member theo id
+router.delete("/delete/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json(new ResponseData("", "Missing member id"));
+    }
+    const result = await MemberService.deleteMemberById(Number(id));
+    if (!result) {
+      return res.status(404).json(new ResponseData("", "Member not found"));
+    }
+    return res.status(200).json(new ResponseData("", "Delete success"));
+  } catch (error: any) {
     return res.status(500).json(new ResponseData("", error.toString()));
   }
 });

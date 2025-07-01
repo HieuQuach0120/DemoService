@@ -6,6 +6,8 @@ import authenMiddleware from "./src/middleware/Authentication";
 import router from "./src/routes/index";
 import { AppDataSource } from "./dbConfig";
 import 'reflect-metadata';
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./src/swagger";
 // other imports
 
 dotenv.config();
@@ -26,3 +28,4 @@ app.listen(process.env.PORT, () => {
 
 // router
 app.use("/api/v1", authenMiddleware, router);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

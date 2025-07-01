@@ -14,6 +14,30 @@ const OFFSET_DEFAULT = 0;
 const memberRepository = AppDataSource.getRepository(Member);
 
 //create
+/**
+ * @swagger
+ * /member/create:
+ *   post:
+ *     tags:
+ *       - Member
+ *     summary: Tạo member
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *             required:
+ *               - name
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 router.post("/create", express.json(), async (req, res) => {
   try {
     validateSaveMember(req.body).then(async (member) => {
@@ -31,6 +55,17 @@ router.post("/create", express.json(), async (req, res) => {
 });
 
 //get list
+/**
+ * @swagger
+ * /member/get-list:
+ *   get:
+ *     tags:
+ *       - Member
+ *     summary: Lấy danh sách member
+ *     responses:
+ *       200:
+ *         description: Danh sách member
+ */
 router.get("/get-list", async (req, res) => {
   try {
     const data = req.query;
@@ -43,6 +78,26 @@ router.get("/get-list", async (req, res) => {
 });
 
 // Tìm member theo id
+/**
+ * @swagger
+ * /member/find/{id}:
+ *   get:
+ *     tags:
+ *       - Member
+ *     summary: Lấy thông tin member theo id
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của member
+ *     responses:
+ *       200:
+ *         description: Thông tin member
+ *       404:
+ *         description: Không tìm thấy member
+ */
 router.get("/find/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -60,6 +115,24 @@ router.get("/find/:id", async (req, res) => {
 });
 
 // Xóa member theo id
+/**
+ * @swagger
+ * /member/delete/{id}:
+ *   delete:
+ *     tags:
+ *       - Member
+ *     summary: 
+*     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của member
+ *     responses:
+ *       200:
+ *         description: Danh sách member
+ */
 router.delete("/delete/:id", async (req, res) => {
   try {
     const id = req.params.id;

@@ -12,6 +12,34 @@ const router = express.Router();
 
 const userRepository = AppDataSource.getRepository(User);
 
+/**
+ * @swagger
+ * /authen/login:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Đăng nhập
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userName:
+ *                 type: string
+ *                 description: Nhập userName hoặc email
+ *               passWord:
+ *                 type: string
+ *             required:
+ *               - userName
+ *               - passWord
+ *     responses:
+ *       200:
+ *         description: Đăng nhập thành công
+ *       403:
+ *         description: Sai tài khoản hoặc mật khẩu
+ */
 //đăng nhập
 router.post("/login", express.json(), async (req, res) => {
   try {
@@ -22,12 +50,13 @@ router.post("/login", express.json(), async (req, res) => {
       const today = new Date();
       const threeMonthsAgo = new Date(today);
       threeMonthsAgo.setMonth(today.getMonth() - 3);
-      let member;
-      if (body.userName) {
-        member = await userRepository.findOne({ where: { userName: body.userName } });
-      } else if (body.email) {
-        member = await userRepository.findOne({ where: { email: body.email } });
-      }
+      let member = await userRepository.findOne({
+        where: [
+          { userName: body.userName },
+          { email: body.userName }
+        ]
+      });
+      console.log('member', member);
       if (member && bcrypt.compareSync(body.passWord, member.passWord || "")) {
         const payload = {
           email: member.email,
@@ -55,21 +84,39 @@ router.post("/login", express.json(), async (req, res) => {
   }
 });
 
-//quên mật khẩu
-router.post("/forgot-password", express.json(), async (req, res) => {
-  const email = req.body.email;
-  const member = await userRepository.findOneBy({
-    email: email,
-  });
-  if (!member) {
-    return res.status(404).json(new ResponseData(null, "Email not found."));
-  }
-
-  member.passWord = bcrypt.hashSync("123456aA@", 10);
-  await userRepository.save(member);
-  return res.status(200).json(new ResponseData("", "Done"));
-});
-
+/**
+ * @swagger
+ * /authen/register:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Đăng ký tài khoản
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userName:
+ *                 type: string
+ *               passWord:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *             required:
+ *               - userName
+ *               - passWord
+ *               - email
+ *               - phoneNumber
+ *     responses:
+ *       201:
+ *         description: Đăng ký thành công
+ *       409:
+ *         description: Username or email already exists
+ */
 // Đăng ký tài khoản
 router.post("/register", express.json(), async (req, res) => {
   try {
@@ -101,6 +148,45 @@ router.post("/register", express.json(), async (req, res) => {
   } catch (error: any) {
     return res.status(500).json(new ResponseData("", error.toString()));
   }
+});
+
+/**
+ * @swagger
+ * /authen/forgot-password:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Quên mật khẩu
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: Đặt lại mật khẩu thành công
+ *       404:
+ *         description: Không tìm thấy email
+ */
+//quên mật khẩu
+router.post("/forgot-password", express.json(), async (req, res) => {
+  const email = req.body.email;
+  const member = await userRepository.findOneBy({
+    email: email,
+  });
+  if (!member) {
+    return res.status(404).json(new ResponseData(null, "Email not found."));
+  }
+
+  member.passWord = bcrypt.hashSync("123456aA@", 10);
+  await userRepository.save(member);
+  return res.status(200).json(new ResponseData("", "Done"));
 });
 
 // cron.schedule("*/10 * * * * *", () => {

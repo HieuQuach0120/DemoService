@@ -149,8 +149,6 @@ router.delete("/delete/:id", async (req, res) => {
   }
 });
 
-export default router;
-
 // update
 router.put(
   "/update/:id",
@@ -175,3 +173,5 @@ router.put(
     }
   }
 );
+
+export default router;

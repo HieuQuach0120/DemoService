@@ -150,3 +150,28 @@ router.delete("/delete/:id", async (req, res) => {
 });
 
 export default router;
+
+// update
+router.put(
+  "/update/:id",
+  express.json(),
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      validateSaveMember(req.body).then(async (member) => {
+        const existing = await memberRepository.findOneBy({ id });
+        if (!existing) {
+          return res.status(404).json(new ResponseData("", "member_not_found"));
+        }
+        existing.name = member.name;
+        existing.description = member.description;
+        await memberRepository.save(existing);
+        return res
+          .status(200)
+          .json(new ResponseData(existing, "member_updated_success"));
+      });
+    } catch (error: any) {
+      return res.status(500).json(new ResponseData("", error.toString()));
+    }
+  }
+);

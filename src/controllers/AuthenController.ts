@@ -24,9 +24,11 @@ router.post("/login", express.json(), async (req, res) => {
       threeMonthsAgo.setMonth(today.getMonth() - 3);
       const member = await userRepository.findOne({
         where: {
-          userName: body.userName,
+          // userName: body.userName,
+          email: body.userName
         },
       });
+      console.log('member', member)
       if (member && bcrypt.compareSync(body.passWord, member.passWord || "")) {
         const payload = {
           email: member.email,

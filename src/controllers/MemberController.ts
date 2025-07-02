@@ -12,7 +12,7 @@ const OFFSET_DEFAULT = 0;
 
 const memberRepository = AppDataSource.getRepository(Member);
 
-//create
+// create
 router.post("/create", express.json(), async (req, res) => {
   try {
     validateSaveMember(req.body).then(async (member) => {
@@ -34,19 +34,17 @@ router.post("/create", express.json(), async (req, res) => {
   }
 });
 
-//get list
+// get list
 router.get("/get-list", async (req, res) => {
   try {
     const data = req.query;
     let query = memberRepository.createQueryBuilder("member");
 
-    // Bỏ điều kiện WHERE "1 = 1" vì nó không cần thiết
     if (data.name) {
       const keyword = data.name.toString();
       query = query.where("name LIKE :name", { name: `%${keyword}%` });
     }
 
-    // Always set limit with offset
     const limit = data.limit ? Number(data.limit) : LIMIT_DEFAULT;
     const offset = data.offset ? Number(data.offset) : OFFSET_DEFAULT;
     query.limit(limit);
@@ -60,5 +58,50 @@ router.get("/get-list", async (req, res) => {
     return res.status(500).json(new ResponseData("", error.toString()));
   }
 });
+
+// update
+router.put(
+  "/update/:id",
+  express.json(),
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      validateSaveMember(req.body).then(async (member) => {
+        const existing = await memberRepository.findOneBy({ id });
+        if (!existing) {
+          return res.status(404).json(new ResponseData("", "member_not_found"));
+        }
+        existing.name = member.name;
+        existing.description = member.description;
+        await memberRepository.save(existing);
+        return res
+          .status(200)
+          .json(new ResponseData(existing, "member_updated_success"));
+      });
+    } catch (error: any) {
+      return res.status(500).json(new ResponseData("", error.toString()));
+    }
+  }
+);
+
+// delete
+router.delete(
+  "/delete/:id",
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const existing = await memberRepository.findOneBy({ id });
+      if (!existing) {
+        return res.status(404).json(new ResponseData("", "member_not_found"));
+      }
+      await memberRepository.delete(id);
+      return res
+        .status(200)
+        .json(new ResponseData(existing, "member_deleted_success"));
+    } catch (error: any) {
+      return res.status(500).json(new ResponseData("", error.toString()));
+    }
+  }
+);
 
 export default router;

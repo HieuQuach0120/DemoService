@@ -189,6 +189,77 @@ router.post("/forgot-password", express.json(), async (req, res) => {
   return res.status(200).json(new ResponseData("", "Done"));
 });
 
+/**
+ * @swagger
+ * /authen/change-password:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Đổi mật khẩu
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *               - confirmPassword
+ *     responses:
+ *       200:
+ *         description: Đổi mật khẩu thành công
+ *       400:
+ *         description: Dữ liệu không hợp lệ hoặc mật khẩu cũ sai
+ *       401:
+ *         description: Chưa đăng nhập
+ */
+router.post("/change-password", express.json(), async (req, res) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json(new ResponseData("", "Missing required fields"));
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json(new ResponseData("", "New passwords do not match"));
+    }
+    // Lấy userId từ token
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
+      return res.status(401).json(new ResponseData("", "No token provided"));
+    }
+    const token = authHeader.split(" ")[1];
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, String(process.env.SECRETKEY));
+    } catch (err) {
+      return res.status(401).json(new ResponseData("", "Invalid token"));
+    }
+    const userId = decoded.id;
+    const user = await userRepository.findOneBy({ id: userId });
+    if (!user) {
+      return res.status(404).json(new ResponseData("", "User not found"));
+    }
+    if (!bcrypt.compareSync(oldPassword, user.passWord || "")) {
+      return res.status(400).json(new ResponseData("", "Old password is incorrect"));
+    }
+    user.passWord = bcrypt.hashSync(newPassword, 10);
+    await userRepository.save(user);
+    return res.status(200).json(new ResponseData("", "Password changed successfully"));
+  } catch (error: any) {
+    return res.status(500).json(new ResponseData("", error.toString()));
+  }
+});
+
 // cron.schedule("*/10 * * * * *", () => {
 //   autoDeactive();
 // });

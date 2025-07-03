@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
 import authenMiddleware from "./src/middleware/Authentication";
+import authenRouter from "./src/controllers/AuthenController";
+import memberRouter from "./src/controllers/MemberController";
 import router from "./src/routes/index";
 import { AppDataSource } from "./dbConfig";
 import 'reflect-metadata';
@@ -27,5 +29,6 @@ app.listen(process.env.PORT, () => {
 });
 
 // router
-app.use("/api/v1", authenMiddleware, router);
+app.use("/api/v1/authen", authenRouter);
+app.use("/api/v1/member", authenMiddleware, memberRouter);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

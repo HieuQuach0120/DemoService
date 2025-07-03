@@ -36,6 +36,7 @@ export class MemberService {
     return member;
   }
 
+  //delete
   static async deleteMemberById(id: number) {
     const member = await memberRepository.findOneBy({ id });
     if (!member) {
@@ -43,5 +44,19 @@ export class MemberService {
     }
     await memberRepository.remove(member);
     return true; // Xóa thành công
+  }
+
+  //update
+  static async updateMemberById(id: number, memberData: any) {
+    const existing = await memberRepository.findOneBy({ id });
+    if (!existing) {
+      return { error: "member_not_found" };
+    }
+
+    existing.name = memberData.name;
+    existing.description = memberData.description;
+    await memberRepository.save(existing);
+
+    return { member: existing };
   }
 }
